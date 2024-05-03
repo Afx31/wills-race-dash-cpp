@@ -1,0 +1,6 @@
+# Build files
+/src/*.o
+/src/*.ini
+
+# Executable
+/src/wills-race-dash-cpp
