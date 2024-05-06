@@ -72,7 +72,6 @@ static void glfw_error_callback(int error, const char* description)
 // Shift byte1 to the left by 8 bits and OR with byte2
 uint16_t concatenateBytes(uint8_t byte1, uint8_t byte2)
 {
-    // Shift byte1 to the left by 8 bits and OR with byte2
     return (static_cast<uint16_t>(byte1) << 8) | byte2;
 }
 
@@ -148,13 +147,33 @@ int main(int, char**)
     if (!glfwInit())
         return 1;
 
+    // --------------------------------------- Window setup ---------------------------------------
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
+    if (!primaryMonitor)
+    {
+        glfwTerminate();
+        return -1;
+    }
+
+    // Get the video mode of the primary monitor
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor);
+
+    // Set window hints for the new window to reference
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1920, 1080, "Wills Race Dash", nullptr, nullptr);
+    // GLFWwindow* window = glfwCreateWindow(1920, 1080, "Wills Race Dash", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Wills Race Dash", primaryMonitor, nullptr);
     if (window == nullptr)
     {
         glfwTerminate();
         return 1;
     }
+
+    // --------------------------------------------------------------------------------------------
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
@@ -173,7 +192,8 @@ int main(int, char**)
     ImGui_ImplOpenGL2_Init();
 
     // Load Fonts
-    io.Fonts->AddFontFromFileTTF(".././assets/Calibri.ttf", 79.0f, NULL, io.Fonts->GetGlyphRangesDefault());
+    io.Fonts->AddFontFromFileTTF(".././assets/Calibri.ttf", 100.0f, NULL, io.Fonts->GetGlyphRangesDefault());
+    //io.Fonts->AddFontFromFileTTF("C:\\Windows\\Fonts\\Candara.ttf", 60.0f, NULL, io.Fonts->GetGlyphRangesDefault());
 
     // Our state
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
@@ -224,10 +244,116 @@ int main(int, char**)
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGui::SetNextWindowPos(ImVec2(0, 0));
+        ImGui::SetNextWindowSize(ImVec2(1920, 1080));
+        static float min_row_height = 150.0f;
+        static float middle_column_indent = 180.0f;
+
+        // ===============================================================================================================
+        ImGui::Begin("Wills Race Dash", 0, ImGuiWindowFlags_NoDecoration);
+        ImGui::ProgressBar(canData.rpm / 9000.0f, ImVec2(1905, 100), "");
         
-        ImGui::Begin("Wills Race Dash");
-        ImGui::Text("Hello World");
+        // ImGuiTableFlags_BordersInnerH | ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg
+        if (ImGui::BeginTable("Data Table", 3,  ImGuiTableFlags_BordersInnerH))
+        {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Coolant:");
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("RPM:");
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(230.0f);
+            ImGui::Text("Oil Temp:");
+            ImGui::Unindent(230.0f);
+            //float textWidth1 = ImGui::CalcTextSize("Oil Temp:").x;
+            ImGui::TableNextRow(ImGuiTableRowFlags_None, min_row_height);
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", canData.ect);
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("%.0f", canData.rpm);
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(470.0f);
+            ImGui::Text("%d", canData.oilTemp);
+            ImGui::Unindent(470.0f);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("IAT:");
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("Speed:");
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(110.0f);
+            ImGui::Text("Oil Pressure:");
+            ImGui::Unindent(110.0f);
+            ImGui::TableNextRow(ImGuiTableRowFlags_None, min_row_height);
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", canData.iat);
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("%d", canData.speed);
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(510.0f);
+            ImGui::Text("%d", canData.oilPressure);
+            ImGui::Unindent(510.0f);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("MAP:");
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("Gear:");
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(450.0f);
+            ImGui::Text("TPS:");
+            ImGui::Unindent(450.0f);
+            ImGui::TableNextRow(ImGuiTableRowFlags_None, min_row_height);
+            ImGui::TableNextColumn();
+            ImGui::Text("%d", canData.map);
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("%d", canData.gear);
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(460.0f);
+            ImGui::Text("%d", canData.tps);
+            ImGui::Unindent(460.0f);
+
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::Text("Air/Fuel:");
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("-");
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(290.0f);
+            ImGui::Text("Voltage:");
+            ImGui::Unindent(290.0f);
+            ImGui::TableNextRow(ImGuiTableRowFlags_None, min_row_height);
+            ImGui::TableNextColumn();
+            ImGui::Text("%.1f", canData.lambdaRatio);
+            ImGui::TableNextColumn();
+            ImGui::Indent(middle_column_indent);
+            ImGui::Text("-");
+            ImGui::Unindent(middle_column_indent);
+            ImGui::TableNextColumn();
+            ImGui::Indent(440.0f);
+            ImGui::Text("%.1f", canData.voltage);
+            ImGui::Unindent(440.0f);
+
+            ImGui::EndTable();
+        }
+
         ImGui::End();
+        // ===============================================================================================================
 
         // Rendering
         ImGui::Render();
