@@ -21,6 +21,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
+#include <cmath>
 
 #define CAN_INTERFACE "can0"
 #define CAN_FRAME_SIZE 8
@@ -31,6 +32,13 @@ struct Config
 {
     bool civic = true;
     bool mazda = false;
+    double conA = 0.0014222095;
+    double conB = 0.00023729017;
+    double conC = 9.3273998E-8;
+    double originalLow = 0; //0.5;
+    double originalHigh = 5; //4.5;
+    double desiredLow = -100; //0;
+    double desiredHigh = 1100; //1000;
 };
 Config config;
 
@@ -45,8 +53,8 @@ struct CANBusData
     int tps = 0;
     int map = 0;
     float lambdaRatio = 0.0;
-    int oilTemp = 0;
-    int oilPressure = 0;
+    double oilTemp = 0.0;
+    double oilPressure = 0.0;
 };
 // Test value display
 // struct CANBusData
@@ -110,8 +118,22 @@ void readCanData(int s, std::atomic<bool>& running, std::mutex& canDataMutex, CA
                         break;
                     case 667:
                     case 1639:
-                        canData.oilTemp = concatenateBytes(frame.data[0], frame.data[1]);
-                        canData.oilPressure = concatenateBytes(frame.data[2], frame.data[3]);
+                        //canData.oilTemp = concatenateBytes(frame.data[0], frame.data[1]);
+                        //canData.oilPressure = concatenateBytes(frame.data[2], frame.data[3]);
+                        {
+                            double oilTempResistance = concatenateBytes(frame.data[0], frame.data[1]);
+                            double kelvinTemp = 1.0 / (config.conA + config.conB * log(oilTempResistance) + config.conC * pow(log(oilTempResistance), 3));
+                            double celsiusTemp = kelvinTemp - 273.15;
+                            canData.oilTemp = celsiusTemp;
+                        }
+                        {
+                            // Calculate the ratio of the original value's position within the original range
+                            double oilPressureResistance = concatenateBytes(frame.data[2], frame.data[3]);
+                            // Use this ratio to find the equivalent position within the desired range
+                            double ratio = (oilPressureResistance - config.originalLow) / (config.originalHigh - config.originalLow);
+                            double kPaValue = (ratio * (config.desiredHigh - config.desiredLow)) + config.desiredLow;
+                            canData.oilPressure = (kPaValue * 0.145038);
+                        }                        
                         break;
                 }
                 
@@ -277,7 +299,7 @@ int main(int, char**)
             ImGui::Unindent(middle_column_indent);
             ImGui::TableNextColumn();
             ImGui::Indent(470.0f);
-            ImGui::Text("%d", canData.oilTemp);
+            ImGui::Text("%s", canData.oilTemp);
             ImGui::Unindent(470.0f);
 
             ImGui::TableNextRow();
@@ -300,7 +322,7 @@ int main(int, char**)
             ImGui::Unindent(middle_column_indent);
             ImGui::TableNextColumn();
             ImGui::Indent(510.0f);
-            ImGui::Text("%d", canData.oilPressure);
+            ImGui::Text("%s", canData.oilPressure);
             ImGui::Unindent(510.0f);
 
             ImGui::TableNextRow();
