@@ -68,8 +68,8 @@ struct CANBusData
 //     int tps = 100;
 //     int map = 20;
 //     float lambdaRatio = 2.0;
-//     int oilTemp = 100;
-//     int oilPressure = 76;
+//     double oilTemp = 100;
+//     double oilPressure = 76;
 // };
 
 static void glfw_error_callback(int error, const char* description)
@@ -298,9 +298,9 @@ int main(int, char**)
             ImGui::Text("%.0f", canData.rpm);
             ImGui::Unindent(middle_column_indent);
             ImGui::TableNextColumn();
-            ImGui::Indent(470.0f);
-            ImGui::Text("%s", canData.oilTemp);
-            ImGui::Unindent(470.0f);
+            ImGui::Indent(460.0f);
+            ImGui::Text("%.0f", canData.oilTemp);
+            ImGui::Unindent(460.0f);
 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
@@ -321,9 +321,9 @@ int main(int, char**)
             ImGui::Text("%d", canData.speed);
             ImGui::Unindent(middle_column_indent);
             ImGui::TableNextColumn();
-            ImGui::Indent(510.0f);
-            ImGui::Text("%s", canData.oilPressure);
-            ImGui::Unindent(510.0f);
+            ImGui::Indent(460.0f);
+            ImGui::Text("%.0f", canData.oilPressure);
+            ImGui::Unindent(460.0f);
 
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
